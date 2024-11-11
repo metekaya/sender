@@ -8,17 +8,17 @@ import ssl
 
 load_dotenv()
 
-sender_email = os.getenv("SENDER_EMAIL")
-sender_password = os.getenv("SENDER_PASSWORD")
-host = os.getenv("HOST")
-
-if not sender_email or not sender_password:
-    raise ValueError("Missing SENDER_EMAIL or SENDER_PASSWORD environment variables.")
-
 app = Flask(__name__)
 
 @app.route("/send-email", methods=["POST"])
 def send_email():
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+    host = os.getenv("HOST")
+
+    if not sender_email or not sender_password:
+        return jsonify({"error": "Missing environment variables"}), 500
+
     data = request.get_json()
     recipient = data.get("recipient")
     subject = data.get("subject")
@@ -54,5 +54,3 @@ def send_email():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5005)

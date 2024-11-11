@@ -15,6 +15,10 @@ def send_email():
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
     host = os.getenv("HOST")
+    api_key = os.getenv("API_KEY")
+
+    if api_key != request.headers.get("X-API-KEY"):
+        return jsonify({"error": "Unauthorized"}), 401
 
     if not sender_email or not sender_password or not host:
         return jsonify({"error": "Missing environment variables"}), 500

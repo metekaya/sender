@@ -2,15 +2,18 @@ from flask import Flask, request, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import json
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+sender_email = os.getenv("SENDER_EMAIL")
+sender_password = os.getenv("SENDER_PASSWORD")
+
+if not sender_email or not sender_password:
+    raise ValueError("Missing SENDER_EMAIL or SENDER_PASSWORD environment variables.")
 
 app = Flask(__name__)
-
-with open("configs.json", "r") as config_file:
-    config = json.load(config_file)
-    sender_email = config.get("sender_email")
-    sender_password = config.get("sender_password")
-
 
 @app.route("/send-email", methods=["POST"])
 def send_email():
@@ -35,7 +38,6 @@ def send_email():
         return jsonify({"message": "Email sent successfully!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5005)

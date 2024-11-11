@@ -4,11 +4,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import os
+import ssl
 
 load_dotenv()
 
 sender_email = os.getenv("SENDER_EMAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
+host = os.getenv("HOST")
 
 if not sender_email or not sender_password:
     raise ValueError("Missing SENDER_EMAIL or SENDER_PASSWORD environment variables.")
@@ -18,9 +20,20 @@ app = Flask(__name__)
 @app.route("/send-email", methods=["POST"])
 def send_email():
     data = request.get_json()
-    recipient = data.get("recipient", "metekaya55@gmail.com")
-    subject = data.get("subject", "Test Email")
-    message = data.get("message", "This is a test email.")
+    recipient = data.get("recipient")
+    subject = data.get("subject")
+    message = data.get("message")
+
+    missing_fields = []
+    if not subject:
+        missing_fields.append("subject")
+    if not message:
+        missing_fields.append("message")
+    if not recipient:
+        missing_fields.append("recipient")
+
+    if missing_fields:
+        return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
 
     try:
         msg = MIMEMultipart()
@@ -29,8 +42,10 @@ def send_email():
         msg["Subject"] = subject
         msg.attach(MIMEText(message, "plain"))
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
+        context = ssl.create_default_context()
+        context.options |= ssl.OP_LEGACY_SERVER_CONNECT
+
+        server = smtplib.SMTP_SSL(host, 465, context=context)
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, recipient, msg.as_string())
         server.quit()

@@ -16,7 +16,7 @@ def send_email():
     sender_password = os.getenv("SENDER_PASSWORD")
     host = os.getenv("HOST")
 
-    if not sender_email or not sender_password:
+    if not sender_email or not sender_password or not host:
         return jsonify({"error": "Missing environment variables"}), 500
 
     data = request.get_json()

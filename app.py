@@ -31,11 +31,16 @@ def send_email_options():
     """
     Explicitly handle preflight requests and return the correct CORS headers.
     """
+    if not ALLOWED_DOMAIN:
+        return jsonify({"error": "Missing Allowed Domain"}), 500
     response = make_response()
     response.headers.add("Access-Control-Allow-Origin", ALLOWED_DOMAIN)
     response.headers.add("Access-Control-Allow-Headers", "Content-Type")
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.headers.add("Access-Control-Max-Age", "3600")  # Cache preflight for 1 hour
+    print("Handling preflight request with headers:")
+    print(response.headers)
+
     return response
 
 
@@ -52,7 +57,7 @@ def send_email():
         return jsonify({"error": "Forbidden"}), 403
 
     # Check environment variables
-    if not sender_email or not sender_password or not host:
+    if not sender_email or not sender_password or not host or not ALLOWED_DOMAIN:
         return jsonify({"error": "Missing environment variables"}), 500
 
     # Get email data from the request

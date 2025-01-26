@@ -24,11 +24,6 @@ def send_email():
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
     host = os.getenv("HOST")
-    api_key = os.getenv("API_KEY")
-
-    # Check API key
-    if api_key != request.headers.get("X-API-KEY"):
-        return jsonify({"error": "Unauthorized"}), 401
 
     # Validate Referer or Origin headers
     referer = request.headers.get("Referer")

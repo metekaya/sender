@@ -7,11 +7,16 @@ import os
 import ssl
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_cors import CORS
 
 # Load environment variables
 load_dotenv()
+ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN")
 
 app = Flask(__name__)
+
+CORS(app, origins=[ALLOWED_DOMAIN], supports_credentials=True)
+
 
 # Correctly initialize Flask-Limiter
 limiter = Limiter(get_remote_address, app=app)
@@ -20,7 +25,7 @@ limiter = Limiter(get_remote_address, app=app)
 @app.route("/send-email", methods=["POST"])
 @limiter.limit("5 per minute")
 def send_email():
-    ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN")
+
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
     host = os.getenv("HOST")

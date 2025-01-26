@@ -80,7 +80,7 @@ def send_email():
         # Set up the email
         msg = MIMEMultipart()
         msg["From"] = sender_email
-        msg["To"] = recipient
+        msg["To"] = sender_email
         msg["Subject"] = subject
         msg.attach(MIMEText(message, "plain"))
 
@@ -89,7 +89,7 @@ def send_email():
         context.options |= ssl.OP_LEGACY_SERVER_CONNECT
         server = smtplib.SMTP_SSL(host, 465, context=context)
         server.login(sender_email, sender_password)
-        server.sendmail(sender_email, recipient, msg.as_string())
+        server.sendmail(sender_email, sender_email, msg.as_string())
         server.quit()
 
         response = jsonify({"message": "Email sent successfully!"})

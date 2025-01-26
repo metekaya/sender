@@ -38,8 +38,6 @@ def send_email_options():
     response.headers.add("Access-Control-Allow-Headers", "Content-Type")
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.headers.add("Access-Control-Max-Age", "3600")  # Cache preflight for 1 hour
-    print("Handling preflight request with headers:")
-    print(response.headers)
 
     return response
 

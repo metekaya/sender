@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -11,31 +11,44 @@ from flask_cors import CORS
 
 # Load environment variables
 load_dotenv()
-ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN")
+ALLOWED_DOMAIN = os.getenv("ALLOWED_DOMAIN", "https://www.goitaly.com.tr")
 
 app = Flask(__name__)
 
-CORS(app, origins=[ALLOWED_DOMAIN], supports_credentials=True)
+# Enable CORS for the specific allowed domain
+CORS(
+    app,
+    resources={r"/send-email": {"origins": ALLOWED_DOMAIN}},
+    supports_credentials=True,
+)
 
-
-# Correctly initialize Flask-Limiter
+# Initialize Flask-Limiter
 limiter = Limiter(get_remote_address, app=app)
+
+
+@app.route("/send-email", methods=["OPTIONS"])
+def send_email_options():
+    """
+    Explicitly handle preflight requests and return the correct CORS headers.
+    """
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", ALLOWED_DOMAIN)
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.add("Access-Control-Max-Age", "3600")  # Cache preflight for 1 hour
+    return response
 
 
 @app.route("/send-email", methods=["POST"])
 @limiter.limit("5 per minute")
 def send_email():
-
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
     host = os.getenv("HOST")
 
     # Validate Referer or Origin headers
-    referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
-    if not (referer and ALLOWED_DOMAIN in referer) and not (
-        origin and ALLOWED_DOMAIN in origin
-    ):
+    if not origin or origin != ALLOWED_DOMAIN:
         return jsonify({"error": "Forbidden"}), 403
 
     # Check environment variables
@@ -76,9 +89,13 @@ def send_email():
         server.sendmail(sender_email, recipient, msg.as_string())
         server.quit()
 
-        return jsonify({"message": "Email sent successfully!"}), 200
+        response = jsonify({"message": "Email sent successfully!"})
+        response.headers.add("Access-Control-Allow-Origin", ALLOWED_DOMAIN)
+        return response, 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        response = jsonify({"error": str(e)})
+        response.headers.add("Access-Control-Allow-Origin", ALLOWED_DOMAIN)
+        return response, 500
 
 
 if __name__ == "__main__":
